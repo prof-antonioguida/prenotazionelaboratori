@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#4a442a">
+<title>Prenotazione laboratorio</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23e6a73a'/%3E%3Crect x='12' y='14' width='40' height='38' rx='6' fill='%23fbf8ee'/%3E%3Crect x='15' y='17' width='34' height='9' rx='3' fill='%234a442a'/%3E%3Crect x='17' y='30' width='8' height='7' rx='2' fill='%23e3dcc4'/%3E%3Crect x='28' y='30' width='8' height='7' rx='2' fill='%234a442a'/%3E%3Crect x='39' y='30' width='8' height='7' rx='2' fill='%23e3dcc4'/%3E%3Crect x='17' y='40' width='8' height='7' rx='2' fill='%23e3dcc4'/%3E%3Crect x='28' y='40' width='8' height='7' rx='2' fill='%23e3dcc4'/%3E%3Crect x='39' y='40' width='8' height='7' rx='2' fill='%23e3dcc4'/%3E%3C/svg%3E">
+<script>
+/* Tema: applicato subito per evitare lampeggi */
+(function(){
+  var t = null;
+  try { t = localStorage.getItem('pl_theme'); } catch (e) {}
+  if (t !== 'light' && t !== 'dark') {
+    t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  }
+  document.documentElement.setAttribute('data-theme', t);
+})();
+</script>
+<style>
+:root{
+  --brand:#4a442a; --brand-ink:#ffffff;
+  --bg:#f3f1e9; --surface:#ffffff; --surface-2:#f8f7f1; --text:#22201a; --muted:#6c6858;
+  --line:#dedad0; --primary:#4a442a; --primary-ink:#ffffff; --primary-soft:#ece8d6;
+  --accent:#e0a33a;
+  --grid:#2b2a25; --hourhead:#d9d9d9; --hourhead-ink:#22201a; --cell:#ffffff; --cell-off:#f1efe8;
+  --cell-hover:#f6f1dd; --booked:#efe7c4; --booked-ink:#2a2715; --today:#f6e5a0;
+  --danger:#b3261e; --danger-soft:#fbe9e7; --ok:#2e6b3a;
+  --shadow:0 1px 2px rgba(30,28,20,.06),0 6px 18px rgba(30,28,20,.07);
+  --shadow-lg:0 10px 40px rgba(20,18,10,.22);
+  color-scheme: light;
+}
+html[data-theme="dark"]{
+  --bg:#13120e; --surface:#1d1c16; --surface-2:#25241d; --text:#ebe7d9; --muted:#a39f8c;
+  --line:#36342a; --primary:#bdae69; --primary-ink:#17150c; --primary-soft:#2f2c1d;
+  --accent:#e0a33a;
+  --grid:#66634f; --hourhead:#3a392f; --hourhead-ink:#ebe7d9; --cell:#201f18; --cell-off:#14130d;
+  --cell-hover:#2e2c1f; --booked:#4b4423; --booked-ink:#fbf3cf; --today:#5c501e;
+  --danger:#f0a097; --danger-soft:#3a1f1c; --ok:#8fd19e;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 6px 18px rgba(0,0,0,.28);
+  --shadow-lg:0 10px 40px rgba(0,0,0,.55);
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:15px; line-height:1.45;
+  -webkit-tap-highlight-color:transparent;
+  -webkit-text-size-adjust:100%;
+}
+button{font:inherit;color:inherit}
+[hidden]{display:none !important}
+.ic{width:20px;height:20px;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- Schermate ---------- */
+.screen{display:none;min-height:100vh;min-height:100dvh}
+.screen.active{display:flex;flex-direction:column}
+
+/* ---------- Pulsanti ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  height:42px;padding:0 16px;border-radius:11px;
+  border:1px solid var(--line);background:var(--surface);color:var(--text);
+  font-weight:600;font-size:14.5px;cursor:pointer;white-space:nowrap;
+  transition:background .15s,border-color .15s,transform .05s;
+}
+.btn:hover{background:var(--surface-2)}
+.btn:active{transform:translateY(1px)}
+.btn:focus-visible,.icon-btn:focus-visible,.nav-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:var(--primary-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
+html[data-theme="dark"] .btn.danger{color:#1a0d0b}
+.btn.ghost{background:transparent;border-color:transparent}
+.btn.ghost:hover{background:var(--surface-2)}
+.btn.block{width:100%}
+.btn[disabled]{opacity:.6;cursor:default}
+.icon-btn{
+  width:42px;height:42px;padding:0;display:inline-flex;align-items:center;justify-content:center;
+  border-radius:11px;border:1px solid var(--line);background:var(--surface);cursor:pointer;color:var(--text);
+}
+.icon-btn:hover{background:var(--surface-2)}
+.icon-btn.plain{border-color:transparent;background:transparent}
+.icon-btn.plain:hover{background:var(--surface-2)}
+
+/* ---------- Caricamento ---------- */
+#scr-loading{align-items:center;justify-content:center;gap:16px;color:var(--muted)}
+.spinner{width:34px;height:34px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--primary);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.fatal{max-width:460px;padding:20px;text-align:center;color:var(--text)}
+.fatal h2{margin:0 0 8px;font-size:18px}
+
+/* ---------- Banner modalita' prova ---------- */
+.demo-banner{
+  display:flex;gap:10px;align-items:flex-start;
+  background:var(--primary-soft);color:var(--text);border:1px solid var(--line);
+  border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.4;
+}
+.demo-banner .ic{width:18px;height:18px;margin-top:1px;color:var(--accent)}
+
+/* ---------- Accesso ---------- */
+#scr-auth{align-items:center;justify-content:center;padding:28px 16px}
+.auth-card{
+  width:100%;max-width:410px;background:var(--surface);border:1px solid var(--line);
+  border-radius:20px;box-shadow:var(--shadow);padding:28px 24px 22px;
+}
+.auth-head{text-align:center;margin-bottom:20px}
+.auth-head .logo{width:72px;height:72px;border-radius:18px;display:block;margin:0 auto 12px;box-shadow:var(--shadow)}
+.auth-head h1{margin:0;font-size:23px;letter-spacing:-.01em}
+.auth-head p{margin:4px 0 0;color:var(--muted);font-size:14px}
+.seg{display:flex;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:4px;margin-bottom:18px}
+.seg button{flex:1;height:36px;border:0;border-radius:9px;background:transparent;cursor:pointer;font-weight:600;color:var(--muted)}
+.seg button.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.field{display:block;margin-bottom:14px}
+.field > span{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text)}
+.input{
+  width:100%;height:46px;border-radius:11px;border:1px solid var(--line);
+  background:var(--surface);color:var(--text);padding:0 14px;font-size:16px;font-family:inherit;
+}
+.input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+.pw-wrap{position:relative}
+.pw-wrap .input{padding-right:48px}
+.pw-wrap .eye{position:absolute;right:3px;top:2px;width:42px;height:42px;border:0;background:transparent;cursor:pointer;color:var(--muted);display:flex;align-items:center;justify-content:center;border-radius:9px}
+.form-error{min-height:20px;margin:2px 0 10px;color:var(--danger);font-size:13.5px;font-weight:600}
+.hint{font-size:13px;color:var(--muted);margin:14px 0 0;line-height:1.45}
+.auth-card .demo-banner{margin-top:16px}
+.credit{margin-top:18px;text-align:center;font-size:12px;color:var(--muted)}
+.credit a{color:inherit}
+
+/* ---------- Barra superiore ---------- */
+.topbar{
+  position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:10px;
+  padding:10px 16px;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));
+  padding-top:max(10px,env(safe-area-inset-top));
+  background:var(--surface);border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.brand .logo{width:36px;height:36px;border-radius:10px;flex:none}
+.brand h1{margin:0;font-size:18px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.account-btn{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 12px 0 10px;border-radius:11px;border:1px solid var(--line);background:var(--surface);cursor:pointer;max-width:200px}
+.account-btn:hover{background:var(--surface-2)}
+.account-btn .uname{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- Home ---------- */
+.home-main{flex:1;width:100%;max-width:1120px;margin:0 auto;padding:26px 16px 30px}
+.home-main .demo-banner{margin-bottom:20px}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.section-head h2{margin:0;font-size:22px;letter-spacing:-.01em}
+.section-head .sub{margin:2px 0 0;color:var(--muted);font-size:14px}
+.lab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.lab-card{
+  position:relative;background:var(--surface);border:1px solid var(--line);border-radius:16px;
+  box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s,border-color .15s;
+}
+.lab-card:hover{transform:translateY(-2px);border-color:var(--primary)}
+.lab-open{
+  display:flex;flex-direction:column;align-items:flex-start;gap:14px;width:100%;
+  padding:18px 18px 16px;border:0;background:transparent;text-align:left;cursor:pointer;border-radius:16px;
+}
+.lab-open:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.lab-icon{width:46px;height:46px;border-radius:13px;background:var(--primary-soft);color:var(--primary);display:flex;align-items:center;justify-content:center}
+.lab-icon .ic{width:24px;height:24px}
+.lab-name{font-size:17px;font-weight:700;line-height:1.3;padding-right:34px;word-break:break-word}
+.lab-go{display:flex;align-items:center;gap:4px;font-size:13.5px;color:var(--muted);font-weight:600}
+.lab-go .ic{width:16px;height:16px}
+.lab-card .kebab{position:absolute;top:10px;right:10px;width:36px;height:36px}
+.empty{
+  border:2px dashed var(--line);border-radius:18px;padding:40px 20px;text-align:center;color:var(--muted);
+  background:var(--surface);
+}
+.empty .ic{width:40px;height:40px;color:var(--primary);margin-bottom:8px}
+.empty h3{margin:0 0 4px;color:var(--text);font-size:17px}
+.empty p{margin:0}
+.home-foot{padding:18px 16px 26px;text-align:center;font-size:12.5px;color:var(--muted)}
+
+/* ---------- Menu a comparsa ---------- */
+.menu{
+  position:fixed;z-index:80;min-width:200px;background:var(--surface);border:1px solid var(--line);
+  border-radius:12px;box-shadow:var(--shadow-lg);padding:6px;
+}
+.menu .mi{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:0;background:transparent;border-radius:8px;cursor:pointer;text-align:left;font-size:14.5px}
+.menu .mi:hover,.menu .mi:focus-visible{background:var(--surface-2);outline:none}
+.menu .mi.danger{color:var(--danger)}
+.menu .mi .ic{width:18px;height:18px}
+.menu .mhead{padding:8px 12px 6px;font-size:12.5px;color:var(--muted)}
+.menu .mhead b{color:var(--text);font-size:14px;display:block}
+.menu hr{border:0;border-top:1px solid var(--line);margin:5px 4px}
+
+/* ---------- Finestra modale ---------- */
+.modal{position:fixed;inset:0;z-index:90;background:rgba(15,14,8,.5);display:flex;align-items:center;justify-content:center;padding:18px}
+.modal-card{width:100%;max-width:430px;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow-lg);padding:22px 22px 18px;animation:pop .16s ease-out}
+@keyframes pop{from{transform:scale(.97);opacity:0}to{transform:none;opacity:1}}
+.modal-card h3{margin:0 0 6px;font-size:19px}
+.modal-card .desc{margin:0 0 16px;color:var(--muted);font-size:14px}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:6px}
+
+/* ---------- Toast ---------- */
+#toasts{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:100;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:calc(100% - 32px);max-width:480px}
+.toast{background:#22201a;color:#f6f3e8;padding:11px 16px;border-radius:12px;font-size:14px;box-shadow:var(--shadow-lg);opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:auto;text-align:center}
+html[data-theme="dark"] .toast{background:#efeadb;color:#1b1a14}
+.toast.show{opacity:1;transform:none}
+.toast.err{background:#8f1d16;color:#fff}
+
+/* ---------- Schermata laboratorio ---------- */
+#scr-lab.active{height:100vh;height:100dvh;min-height:0}
+.lab-bar .title{flex:1;min-width:0}
+.lab-bar .title small{display:block;font-size:12px;color:var(--muted);line-height:1.2}
+.lab-bar .title h1{margin:0;font-size:17px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.zoom-group{display:flex;align-items:center;border:1px solid var(--line);border-radius:11px;overflow:hidden;background:var(--surface)}
+.zoom-group button{width:38px;height:40px;border:0;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text)}
+.zoom-group button:hover{background:var(--surface-2)}
+.zoom-group .zl{min-width:52px;font-size:13px;font-weight:600;color:var(--muted);text-align:center;font-variant-numeric:tabular-nums}
+.cal-scroller{
+  flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+  touch-action:pan-x pan-y;background:var(--bg);position:relative;
+}
+.cal-wrap{--z:1;font-size:calc(14px * var(--z));padding:.9em;width:-webkit-max-content;width:max-content;min-width:100%}
+.pinch-hint{
+  position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:40;
+  background:rgba(34,32,26,.9);color:#fff;font-size:13.5px;padding:9px 14px;border-radius:999px;
+  display:flex;align-items:center;gap:8px;pointer-events:none;transition:opacity .4s;white-space:nowrap
+}
+.pinch-hint .ic{width:18px;height:18px}
+
+/* ---------- Tabella del calendario (come il modello) ---------- */
+table.cal{
+  border-collapse:collapse;table-layout:fixed;margin:0 auto;width:49.4em;
+  font-family:Arial,Helvetica,sans-serif;color:var(--text);background:var(--cell);
+  border:2px solid var(--grid);
+  -webkit-user-select:none;user-select:none;
+}
+table.cal col.c-day{width:7.4em}
+table.cal col.c-num{width:2.4em}
+table.cal col.c-h{width:4.4em}
+table.cal td,table.cal th{border:1px solid var(--grid);padding:0 .15em;text-align:center;vertical-align:middle;overflow:hidden}
+table.cal tbody tr{height:2.3em}
+table.cal th.cal-title{
+  position:-webkit-sticky;position:sticky;top:0;z-index:5;
+  background:var(--brand);color:var(--brand-ink);padding:0;height:clamp(44px,2.7em,62px);
+  border-color:var(--brand);overflow:visible;
+}
+.title-inner{
+  position:-webkit-sticky;position:sticky;left:0;
+  width:min(100%,var(--vw,100vw));
+  display:flex;align-items:center;justify-content:center;gap:clamp(10px,.8em,18px);height:100%;
+}
+.m-label{font-weight:700;font-size:clamp(15px,1.15em,23px);letter-spacing:.02em;min-width:9.5em;text-align:center;white-space:nowrap}
+.nav-btn{
+  width:clamp(34px,2.1em,46px);height:clamp(34px,2.1em,46px);border-radius:9px;padding:0;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.1);color:#fff;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;
+}
+.nav-btn:hover{background:rgba(255,255,255,.2)}
+.nav-btn .ic{width:clamp(18px,1.3em,26px);height:clamp(18px,1.3em,26px)}
+tr.hh th{background:var(--hourhead);color:var(--hourhead-ink);font-weight:700;font-size:.82em}
+tr.hh td{background:var(--cell)}
+td.dname{font-weight:700;font-size:.84em;white-space:nowrap}
+td.dnum{font-size:.88em}
+tr.is-today td.dname,tr.is-today td.dnum{background:var(--today)}
+td.slot{cursor:pointer;font-size:.86em;position:relative;padding:0 .1em}
+td.slot .sv{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:2.4}
+@media (hover:hover){td.slot:not(.off):not(.booked):hover{background:var(--cell-hover)}}
+td.slot.booked{background:var(--booked);color:var(--booked-ink);font-weight:700}
+td.slot.flash{animation:flash 1.2s ease-out}
+@keyframes flash{0%{box-shadow:inset 0 0 0 .2em var(--accent)}100%{box-shadow:inset 0 0 0 0 transparent}}
+td.slot.off{background:var(--cell-off);cursor:default}
+td.slot:focus-visible{outline:.16em solid var(--accent);outline-offset:-.16em}
+td.slot.editing{padding:0;background:var(--surface)}
+td.slot input{
+  display:block;width:100%;height:2.3em;margin:0;border:0;padding:0 .2em;
+  font:inherit;font-weight:700;text-align:center;color:var(--text);background:var(--surface);
+  outline:.17em solid var(--accent);outline-offset:-.17em;border-radius:0;
+  -webkit-user-select:text;user-select:text;
+}
+.cal-legend{max-width:49.4em;margin:.9em auto 0;font-size:.82em;color:var(--muted);text-align:center;line-height:1.5}
+
+@media (max-width:640px){
+  .brand h1{font-size:16.5px}
+  .account-btn .uname{display:none}
+  .account-btn{padding:0;width:42px;justify-content:center}
+  .lab-bar{gap:6px;padding-left:10px;padding-right:10px}
+  .zoom-group .zl{display:none}
+  .zoom-group button{width:34px}
+  .btn-pdf .lbl,.btn-today .lbl{display:none}
+  .btn-pdf,.btn-today{width:42px;padding:0}
+  .home-main{padding-top:20px}
+  .section-head .btn{width:100%}
+}
+@media (max-width:380px){
+  .zoom-group{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- Icone (sprite) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="lgBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f1b84b"/><stop offset="1" stop-color="#d98f2b"/>
+    </linearGradient>
+  </defs>
+  <symbol id="logo" viewBox="0 0 512 512">
+    <rect width="512" height="512" fill="url(#lgBg)"/>
+    <rect x="96" y="118" width="320" height="300" rx="36" fill="#3f3a22" opacity=".18" transform="translate(0 10)"/>
+    <rect x="96" y="112" width="320" height="300" rx="36" fill="#fbf8ee"/>
+    <rect x="116" y="132" width="280" height="70" rx="18" fill="#4a442a"/>
+    <rect x="168" y="84" width="26" height="72" rx="13" fill="#fbf8ee" stroke="#4a442a" stroke-width="8"/>
+    <rect x="318" y="84" width="26" height="72" rx="13" fill="#fbf8ee" stroke="#4a442a" stroke-width="8"/>
+    <rect x="128" y="226" width="72" height="66" rx="14" fill="#e6dfc7"/>
+    <rect x="220" y="226" width="72" height="66" rx="14" fill="#4a442a"/>
+    <path d="M238 259l14 14 26-28" fill="none" stroke="#fbf8ee" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="312" y="226" width="72" height="66" rx="14" fill="#e6dfc7"/>
+    <rect x="128" y="310" width="72" height="66" rx="14" fill="#e6dfc7"/>
+    <rect x="220" y="310" width="72" height="66" rx="14" fill="#e6dfc7"/>
+    <circle cx="372" cy="372" r="74" fill="#4a442a" stroke="#fbf8ee" stroke-width="12"/>
+    <path d="M354 326h36M360 326v30l-26 42a8 8 0 0 0 7 12h62a8 8 0 0 0 7-12l-26-42v-30" fill="none" stroke="#fbf8ee" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M343 384h58l9 15a5 5 0 0 1-4 7h-68a5 5 0 0 1-4-7z" fill="#f1b84b"/>
+  </symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-chev-l" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-chev-r" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3"/></symbol>
+  <symbol id="i-pdf" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="19" r="1.2"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></symbol>
+  <symbol id="i-zin" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3M11 8v6M8 11h6"/></symbol>
+  <symbol id="i-zout" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3M8 11h6"/></symbol>
+  <symbol id="i-fit" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M16 21h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M9.9 9.9a3 3 0 1 0 4.2 4.2M10.7 5.1A10.4 10.4 0 0 1 12 5c7 0 10 7 10 7a13 13 0 0 1-1.7 2.7M6.6 6.6A13.5 13.5 0 0 0 2 12s3 7 10 7a9.7 9.7 0 0 0 5.4-1.6M2 2l20 20"/></symbol>
+  <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6.5L4.6 18.8A1.5 1.5 0 0 0 5.9 21h12.2a1.5 1.5 0 0 0 1.3-2.2L14 9.5V3M7.2 15h9.6"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+  <symbol id="i-today" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><rect x="8" y="14" width="4" height="4" rx=".5"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+  <symbol id="i-pinch" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></symbol>
+</svg>
+
+<!-- Caricamento -->
+<section id="scr-loading" class="screen active" aria-live="polite">
+  <div class="spinner"></div>
+  <div id="loadingText">Caricamento…</div>
+</section>
+
+<!-- Accesso / Registrazione -->
+<section id="scr-auth" class="screen">
+  <div class="auth-card">
+    <div class="auth-head">
+      <svg class="logo" viewBox="0 0 512 512" aria-hidden="true"><use href="#logo"/></svg>
+      <h1>Prenotazione laboratorio</h1>
+      <p>Prenota le ore dei laboratori della scuola</p>
+    </div>
+    <div class="seg" role="tablist">
+      <button type="button" id="tabLogin" class="active" role="tab" aria-selected="true">Accedi</button>
+      <button type="button" id="tabReg" role="tab" aria-selected="false">Registrati</button>
+    </div>
+    <form id="authForm" novalidate>
+      <label class="field"><span>Nome utente</span>
+        <input class="input" id="authUser" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="es. margherita" maxlength="30">
+      </label>
+      <label class="field"><span>Password</span>
+        <div class="pw-wrap">
+          <input class="input" id="authPass" type="password" autocomplete="current-password" placeholder="Password">
+          <button type="button" class="eye" data-eye="authPass" aria-label="Mostra password"><svg class="ic"><use href="#i-eye"/></svg></button>
+        </div>
+      </label>
+      <label class="field" id="confirmWrap" hidden><span>Conferma password</span>
+        <div class="pw-wrap">
+          <input class="input" id="authPass2" type="password" autocomplete="new-password" placeholder="Ripeti la password">
+          <button type="button" class="eye" data-eye="authPass2" aria-label="Mostra password"><svg class="ic"><use href="#i-eye"/></svg></button>
+        </div>
+      </label>
+      <p class="form-error" id="authError" role="alert"></p>
+      <button class="btn primary block" id="authSubmit" type="submit">Accedi</button>
+      <p class="hint" id="authHint"></p>
+    </form>
+    <div class="demo-banner" data-demo hidden>
+      <svg class="ic"><use href="#i-info"/></svg>
+      <div><b>Modalità prova.</b> Firebase non è ancora collegato: account e prenotazioni restano solo su questo dispositivo.</div>
+    </div>
+    <div class="credit">App del prof. Antonio Guida · <a href="mailto:furtwangler900@gmail.com">furtwangler900@gmail.com</a></div>
+  </div>
+</section>
+
+<!-- Pagina principale: elenco laboratori -->
+<section id="scr-home" class="screen">
+  <header class="topbar">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 512 512" aria-hidden="true"><use href="#logo"/></svg>
+      <h1>Prenotazione laboratorio</h1>
+    </div>
+    <button class="icon-btn" id="themeBtn" type="button" aria-label="Cambia tema"><svg class="ic"><use id="themeIcon" href="#i-moon"/></svg></button>
+    <button class="account-btn" id="accountBtn" type="button" aria-label="Account">
+      <svg class="ic"><use href="#i-user"/></svg><span class="uname" id="unameLabel"></span>
+    </button>
+  </header>
+  <main class="home-main">
+    <div class="demo-banner" data-demo hidden>
+      <svg class="ic"><use href="#i-info"/></svg>
+      <div><b>Modalità prova.</b> Firebase non è ancora collegato: account e prenotazioni restano solo su questo dispositivo. Inserisci il blocco <code>firebaseConfig</code> nel file per condividere i dati con tutti i docenti.</div>
+    </div>
+    <div class="section-head">
+      <div>
+        <h2>Laboratori</h2>
+        <p class="sub" id="labCount">Scegli un laboratorio per vedere e prenotare le ore.</p>
+      </div>
+      <button class="btn primary" id="addLabBtn" type="button"><svg class="ic"><use href="#i-plus"/></svg>Aggiungi laboratorio</button>
+    </div>
+    <div id="labGrid" class="lab-grid"></div>
+  </main>
+  <footer class="home-foot">Prenotazione laboratorio · app del prof. Antonio Guida · furtwangler900@gmail.com</footer>
+</section>
+
+<!-- Calendario del laboratorio -->
+<section id="scr-lab" class="screen">
+  <header class="topbar lab-bar">
+    <button class="icon-btn plain" id="backBtn" type="button" aria-label="Torna ai laboratori"><svg class="ic"><use href="#i-back"/></svg></button>
+    <div class="title"><small>Laboratorio</small><h1 id="labTitle"></h1></div>
+    <button class="btn btn-today" id="todayBtn" type="button" hidden><svg class="ic"><use href="#i-today"/></svg><span class="lbl">Oggi</span></button>
+    <div class="zoom-group" role="group" aria-label="Zoom">
+      <button type="button" id="zoomOut" aria-label="Riduci"><svg class="ic"><use href="#i-zout"/></svg></button>
+      <span class="zl" id="zoomLabel">100%</span>
+      <button type="button" id="zoomIn" aria-label="Ingrandisci"><svg class="ic"><use href="#i-zin"/></svg></button>
+      <button type="button" id="zoomFit" aria-label="Adatta allo schermo"><svg class="ic"><use href="#i-fit"/></svg></button>
+    </div>
+    <button class="btn primary btn-pdf" id="pdfBtn" type="button" aria-label="Scarica il mese in PDF"><svg class="ic"><use href="#i-pdf"/></svg><span class="lbl">PDF</span></button>
+  </header>
+  <div class="cal-scroller" id="calScroller">
+    <div class="cal-wrap" id="calWrap"></div>
+    <div class="pinch-hint" id="pinchHint" hidden><svg class="ic"><use href="#i-pinch"/></svg>Pizzica con due dita per ingrandire</div>
+  </div>
+</section>
+
+<div id="menu" class="menu" hidden></div>
+<div id="modal" class="modal" hidden><div class="modal-card" id="modalCard" role="dialog" aria-modal="true"></div></div>
+<div id="toasts" aria-live="polite"></div>
+
+<script>
+(function () {
+'use strict';
+
+/* =====================================================================
+   CONFIGURAZIONE FIREBASE
+   Incolla qui il blocco firebaseConfig del progetto Firebase
+   (Console Firebase > Impostazioni progetto > Generali > Le tue app >
+   app web </> > Configurazione SDK).
+   Finche' i valori restano "INCOLLA_QUI...", l'app funziona in
+   MODALITA' PROVA: account e prenotazioni restano solo su questo
+   dispositivo (utile per provarla subito).
+   Questi valori non sono segreti: la protezione dei dati e' data dalle
+   regole di sicurezza di Firestore.
+   ===================================================================== */
+var firebaseConfig = {
+  apiKey: "AIzaSyBWumfiwqo5CDJ20gOyqadsKqYX1JNOAGw",
+  authDomain: "prenotazione-laboratori-ce40d.firebaseapp.com",
+  projectId: "prenotazione-laboratori-ce40d",
+  storageBucket: "prenotazione-laboratori-ce40d.firebasestorage.app",
+  messagingSenderId: "257044159605",
+  appId: "1:257044159605:web:c903efb4bbf698ac722c3c"
+};
+var FIREBASE_VERSION = '10.12.2';
+var JSPDF_URL = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+/* Il nome utente viene trasformato in un indirizzo interno
+   (nomeutente@prenotazione-laboratorio.app): nessuna email reale serve. */
+var EMAIL_DOMAIN = 'prenotazione-laboratorio.app';
+var USE_FIREBASE = !/INCOLLA_QUI/.test(String(firebaseConfig.apiKey) + String(firebaseConfig.projectId));
+
+/* ============================ Costanti ============================ */
+var MONTHS = ['GENNAIO','FEBBRAIO','MARZO','APRILE','MAGGIO','GIUGNO','LUGLIO','AGOSTO','SETTEMBRE','OTTOBRE','NOVEMBRE','DICEMBRE'];
+var MONTHS_LC = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
+var DAYS = ['luned\u00ec','marted\u00ec','mercoled\u00ec','gioved\u00ec','venerd\u00ec','sabato'];
+var HOURS = 9;
+var ZMIN = 0.3, ZMAX = 3;
+var MAX_CELL = 24;
+
+/* ============================ Utilita' ============================ */
+function $(id) { return document.getElementById(id); }
+function pad(n) { return (n < 10 ? '0' : '') + n; }
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+function icon(name, cls) { return '<svg class="ic' + (cls ? ' ' + cls : '') + '"><use href="#i-' + name + '"/></svg>'; }
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function store(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
+function load(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function loadScript(src) {
+  return new Promise(function (resolve, reject) {
+    var s = document.createElement('script');
+    s.src = src; s.async = true;
+    s.onload = function () { resolve(); };
+    s.onerror = function () { reject(new Error('Impossibile caricare ' + src + ' (controlla la connessione)')); };
+    document.head.appendChild(s);
+  });
+}
+
+function toast(msg, type) {
+  var t = document.createElement('div');
+  t.className = 'toast' + (type === 'err' ? ' err' : '');
+  t.textContent = msg;
+  $('toasts').appendChild(t);
+  requestAnimationFrame(function () { requestAnimationFrame(function () { t.classList.add('show'); }); });
+  setTimeout(function () {
+    t.classList.remove('show');
+    setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 260);
+  }, type === 'err' ? 5200 : 3000);
+}
+
+function friendly(e) {
+  var code = (e && e.code) || '';
+  var map = {
+    'auth/email-already-in-use': 'Questo nome utente \u00e8 gi\u00e0 registrato: usa \u00abAccedi\u00bb.',
+    'auth/invalid-credential': 'Nome utente o password non corretti.',
+    'auth/invalid-login-credentials': 'Nome utente o password non corretti.',
+    'auth/wrong-password': 'Nome utente o password non corretti.',
+    'auth/user-not-found': 'Nome utente non registrato: usa \u00abRegistrati\u00bb per crearlo.',
+    'auth/invalid-email': 'Nome utente non valido.',
+    'auth/too-many-requests': 'Troppi tentativi: riprova tra qualche minuto.',
+    'auth/network-request-failed': 'Errore di rete: controlla la connessione e riprova.',
+    'auth/operation-not-allowed': 'Nella console Firebase attiva l\'accesso "Email/password" (Authentication > Metodo di accesso).',
+    'auth/requires-recent-login': 'Per sicurezza esci, rientra e riprova.',
+    'auth/api-key-not-valid.-please-pass-a-valid-api-key.': 'Configurazione Firebase non valida: controlla firebaseConfig nel file.',
+    'auth/invalid-api-key': 'Configurazione Firebase non valida: controlla firebaseConfig nel file.',
+    'permission-denied': 'Accesso ai dati negato: controlla le regole di sicurezza di Firestore.',
+    'unavailable': 'Connessione assente: le modifiche saranno salvate al ritorno della rete.',
+    'not-found': 'Elemento non trovato (forse \u00e8 stato eliminato da un collega).'
+  };
+  if (map[code]) return map[code];
+  return 'Errore' + (code ? ' (' + code + ')' : '') + (e && e.message ? ': ' + e.message : '');
+}
+
+/* Diagnostica visibile: qualsiasi errore imprevisto appare come avviso */
+window.addEventListener('error', function (ev) {
+  if (ev && ev.message) toast('Errore imprevisto: ' + ev.message, 'err');
+});
+window.addEventListener('unhandledrejection', function (ev) {
+  var r = ev && ev.reason;
+  if (r) toast(friendly(r), 'err');
+});
+
+/* =====================================================================
+   BACKEND LOCALE (modalita' prova): tutto nel browser
+   ===================================================================== */
+var Local = (function () {
+  var K_ACC = 'pl_local_accounts', K_SES = 'pl_local_session', K_DATA = 'pl_local_data_';
+  var authCbs = [], watchers = [];
+  function read(k, def) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch (e) { return def; } }
+  function write(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+  function hash(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h.toString(16); }
+  function data(u) { var d = read(K_DATA + u, null); if (!d || !d.labs) d = { labs: {}, mesi: {} }; if (!d.mesi) d.mesi = {}; return d; }
+  function notify() { watchers.slice().forEach(function (w) { w.fire(); }); }
+  function save(u, d) { write(K_DATA + u, d); notify(); }
+  function fireAuth() { var u = read(K_SES, null); authCbs.forEach(function (cb) { cb(u); }); }
+  function err(code) { var e = new Error(code); e.code = code; return e; }
+  function later(v) { return new Promise(function (r) { setTimeout(function () { r(v); }, 60); }); }
+  function watch(fn) {
+    var w = { fire: fn };
+    watchers.push(w);
+    setTimeout(fn, 0);
+    return function () { var i = watchers.indexOf(w); if (i >= 0) watchers.splice(i, 1); };
+  }
+  window.addEventListener('storage', function (e) {
+    if (!e.key) return;
+    if (e.key.indexOf(K_DATA) === 0) notify();
+    if (e.key === K_SES) fireAuth();
+  });
+  return {
+    init: function () { return Promise.resolve(); },
+    onAuth: function (cb) { authCbs.push(cb); setTimeout(function () { cb(read(K_SES, null)); }, 0); },
+    register: function (u, p) {
+      var acc = read(K_ACC, {});
+      if (acc[u]) return Promise.reject(err('auth/email-already-in-use'));
+      acc[u] = hash(u + '|' + p); write(K_ACC, acc); write(K_SES, u);
+      return later().then(fireAuth);
+    },
+    login: function (u, p) {
+      var acc = read(K_ACC, {});
+      if (!acc[u] || acc[u] !== hash(u + '|' + p)) return Promise.reject(err('auth/invalid-credential'));
+      write(K_SES, u);
+      return later().then(fireAuth);
+    },
+    logout: function () { localStorage.removeItem(K_SES); return later().then(fireAuth); },
+    changePassword: function (u, oldP, newP) {
+      var acc = read(K_ACC, {});
+      if (acc[u] !== hash(u + '|' + oldP)) return Promise.reject(err('auth/invalid-credential'));
+      acc[u] = hash(u + '|' + newP); write(K_ACC, acc);
+      return later();
+    },
+    watchLabs: function (u, cb) {
+      return watch(function () {
+        var d = data(u);
+        cb(Object.keys(d.labs).map(function (id) { return { id: id, nome: d.labs[id].nome, creato: d.labs[id].creato || 0 }; }));
+      });
+    },
+    addLab: function (u, nome) {
+      var d = data(u), id = 'lab' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      d.labs[id] = { nome: nome, creato: Date.now() }; save(u, d);
+      return later(id);
+    },
+    renameLab: function (u, id, nome) {
+      var d = data(u); if (!d.labs[id]) return Promise.reject(err('not-found'));
+      d.labs[id].nome = nome; save(u, d); return later();
+    },
+    deleteLab: function (u, id) {
+      var d = data(u); delete d.labs[id]; delete d.mesi[id]; save(u, d); return later();
+    },
+    watchMonth: function (u, labId, ym, cb) {
+      return watch(function () {
+        var d = data(u), m = (d.mesi[labId] || {})[ym] || {};
+        var copy = {}; for (var k in m) if (Object.prototype.hasOwnProperty.call(m, k)) copy[k] = m[k];
+        cb(copy);
+      });
+    },
+    setCell: function (u, labId, ym, key, val) {
+      var d = data(u);
+      if (!d.labs[labId]) return Promise.reject(err('not-found'));
+      var lm = d.mesi[labId] = d.mesi[labId] || {};
+      var m = lm[ym] = lm[ym] || {};
+      if (val) m[key] = val; else delete m[key];
+      save(u, d);
+      return later();
+    }
+  };
+})();
+
+/* =====================================================================
+   BACKEND FIREBASE (Authentication + Firestore)
+   Struttura dati: scuole/{nomeutente}/laboratori/{idLab}
+                   scuole/{nomeutente}/laboratori/{idLab}/mesi/{AAAA-MM}
+                   -> campo "celle": { "05-4": "2A", ... }  (giorno-ora)
+   ===================================================================== */
+var Fire = (function () {
+  var auth, db, FV;
+  function email(u) { return u + '@' + EMAIL_DOMAIN; }
+  /* Firebase vuole password di almeno 6 caratteri: la password scelta
+     (anche corta, es. "34rd") viene estesa sempre allo stesso modo. */
+  function pw(p) { return 'Lab#' + p + '#PrenotazioneLab'; }
+  function labs(u) { return db.collection('scuole').doc(u).collection('laboratori'); }
+  return {
+    init: function () {
+      var base = 'https://www.gstatic.com/firebasejs/' + FIREBASE_VERSION + '/';
+      return loadScript(base + 'firebase-app-compat.js')
+        .then(function () { return Promise.all([loadScript(base + 'firebase-auth-compat.js'), loadScript(base + 'firebase-firestore-compat.js')]); })
+        .then(function () {
+          firebase.initializeApp(firebaseConfig);
+          auth = firebase.auth();
+          db = firebase.firestore();
+          FV = firebase.firestore.FieldValue;
+          if (window.__PL_EMULATOR__) {
+            auth.useEmulator('http://127.0.0.1:' + window.__PL_EMULATOR__.auth);
+            db.useEmulator('127.0.0.1', window.__PL_EMULATOR__.firestore);
+          }
+        });
+    },
+    onAuth: function (cb) {
+      auth.onAuthStateChanged(function (user) {
+        cb(user && user.email ? user.email.split('@')[0].toLowerCase() : null);
+      });
+    },
+    register: function (u, p) { return auth.createUserWithEmailAndPassword(email(u), pw(p)); },
+    login: function (u, p) { return auth.signInWithEmailAndPassword(email(u), pw(p)); },
+    logout: function () { return auth.signOut(); },
+    changePassword: function (u, oldP, newP) {
+      var user = auth.currentUser;
+      var cred = firebase.auth.EmailAuthProvider.credential(email(u), pw(oldP));
+      return user.reauthenticateWithCredential(cred).then(function () { return user.updatePassword(pw(newP)); });
+    },
+    watchLabs: function (u, cb, onErr) {
+      return labs(u).onSnapshot(function (snap) {
+        cb(snap.docs.map(function (d) { var x = d.data() || {}; return { id: d.id, nome: x.nome || 'Laboratorio', creato: x.creato || 0 }; }));
+      }, onErr);
+    },
+    addLab: function (u, nome) {
+      return labs(u).add({ nome: nome, creato: Date.now() }).then(function (r) { return r.id; });
+    },
+    renameLab: function (u, id, nome) { return labs(u).doc(id).update({ nome: nome }); },
+    deleteLab: function (u, id) {
+      var ref = labs(u).doc(id);
+      return ref.collection('mesi').get().then(function (snap) {
+        var batch = db.batch();
+        snap.forEach(function (d) { batch.delete(d.ref); });
+        batch.delete(ref);
+        return batch.commit();
+      });
+    },
+    watchMonth: function (u, labId, ym, cb, onErr) {
+      return labs(u).doc(labId).collection('mesi').doc(ym).onSnapshot(function (d) {
+        var x = d.exists ? (d.data() || {}) : {};
+        cb(x.celle || {});
+      }, onErr);
+    },
+    setCell: function (u, labId, ym, key, val) {
+      var c = {}; c[key] = val ? val : FV.delete();
+      return labs(u).doc(labId).collection('mesi').doc(ym).set({ celle: c, aggiornato: Date.now() }, { merge: true });
+    }
+  };
+})();
+
+var B = USE_FIREBASE ? Fire : Local;
+
+/* ============================ Stato ============================ */
+var S = {
+  user: null, labs: [], labsUnsub: null,
+  lab: null, year: 0, month: 0, cells: {}, monthUnsub: null,
+  editing: null, zoom: 1, authMode: 'login'
+};
+
+function showScreen(id) {
+  ['scr-loading', 'scr-auth', 'scr-home', 'scr-lab'].forEach(function (s) {
+    $(s).classList.toggle('active', s === id);
+  });
+  closeMenu();
+}
+
+/* ============================ Tema ============================ */
+function currentTheme() { return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'; }
+function syncThemeIcon() {
+  var dark = currentTheme() === 'dark';
+  $('themeIcon').setAttribute('href', dark ? '#i-sun' : '#i-moon');
+  $('themeBtn').setAttribute('aria-label', dark ? 'Passa al tema chiaro' : 'Passa al tema scuro');
+  $('themeBtn').title = dark ? 'Tema chiaro' : 'Tema scuro';
+  var m = document.querySelector('meta[name="theme-color"]');
+  if (m) m.setAttribute('content', dark ? '#1d1c16' : '#4a442a');
+}
+$('themeBtn').addEventListener('click', function () {
+  var t = currentTheme() === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', t);
+  store('pl_theme', t);
+  syncThemeIcon();
+});
+syncThemeIcon();
+
+/* ============================ Accesso ============================ */
+function setAuthMode(mode) {
+  S.authMode = mode;
+  var reg = mode === 'register';
+  $('tabLogin').classList.toggle('active', !reg);
+  $('tabReg').classList.toggle('active', reg);
+  $('tabLogin').setAttribute('aria-selected', String(!reg));
+  $('tabReg').setAttribute('aria-selected', String(reg));
+  $('confirmWrap').hidden = !reg;
+  $('authPass').setAttribute('autocomplete', reg ? 'new-password' : 'current-password');
+  $('authSubmit').textContent = reg ? 'Crea le credenziali' : 'Accedi';
+  $('authHint').textContent = reg
+    ? 'Crea le credenziali una sola volta (ad esempio dal referente del laboratorio) e poi comunicale a tutti i docenti: chi entra con lo stesso nome utente vede e modifica le stesse prenotazioni.'
+    : 'Usa il nome utente e la password comuni forniti dalla scuola.';
+  $('authError').textContent = '';
+}
+$('tabLogin').addEventListener('click', function () { setAuthMode('login'); });
+$('tabReg').addEventListener('click', function () { setAuthMode('register'); });
+Array.prototype.forEach.call(document.querySelectorAll('[data-eye]'), function (b) {
+  b.addEventListener('click', function () {
+    var inp = $(b.getAttribute('data-eye'));
+    var show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password';
+    b.innerHTML = icon(show ? 'eye-off' : 'eye');
+    b.setAttribute('aria-label', show ? 'Nascondi password' : 'Mostra password');
+  });
+});
+
+function normUser(u) { return String(u || '').trim().toLowerCase(); }
+function checkUser(u) {
+  if (!u) return 'Inserisci il nome utente.';
+  if (!/^[a-z0-9._-]{3,30}$/.test(u)) return 'Il nome utente pu\u00f2 contenere solo lettere (senza accenti), numeri, punto e trattini, da 3 a 30 caratteri, senza spazi.';
+  return '';
+}
+function checkPass(p) {
+  if (!p) return 'Inserisci la password.';
+  if (p.length < 4) return 'La password deve avere almeno 4 caratteri.';
+  return '';
+}
+
+$('authForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var u = normUser($('authUser').value), p = $('authPass').value, er = $('authError');
+  er.textContent = '';
+  var msg = checkUser(u) || checkPass(p);
+  if (!msg && S.authMode === 'register' && p !== $('authPass2').value) msg = 'Le due password non coincidono.';
+  if (msg) { er.textContent = msg; return; }
+  var btn = $('authSubmit');
+  btn.disabled = true;
+  var pr = S.authMode === 'register' ? B.register(u, p) : B.login(u, p);
+  pr.then(function () {
+    store('pl_last_user', u);
+    $('authPass').value = ''; $('authPass2').value = '';
+    if (S.authMode === 'register') toast('Credenziali create: ora comunicale ai colleghi.');
+  }).catch(function (err) {
+    er.textContent = friendly(err);
+  }).then(function () { btn.disabled = false; });
+});
+
+/* ============================ Avvio ============================ */
+function start() {
+  Array.prototype.forEach.call(document.querySelectorAll('[data-demo]'), function (el) { el.hidden = USE_FIREBASE; });
+  setAuthMode('login');
+  var last = load('pl_last_user');
+  if (last) $('authUser').value = last;
+  B.init().then(function () {
+    B.onAuth(handleAuth);
+  }).catch(function (e) {
+    $('scr-loading').innerHTML = '<div class="fatal"><h2>Impossibile avviare l\'app</h2><p>' + esc(e && e.message ? e.message : String(e)) +
+      '</p><p><button class="btn primary" onclick="location.reload()">Riprova</button></p></div>';
+  });
+}
+
+function handleAuth(u) {
+  if (u) {
+    if (S.user === u && S.labsUnsub) return;
+    cleanup();
+    S.user = u;
+    $('unameLabel').textContent = u;
+    S.labsUnsub = B.watchLabs(u, onLabs, function (e) { toast(friendly(e), 'err'); });
+    var st = history.state;
+    if (st && st.pl === 'lab') history.replaceState({ pl: 'home' }, '');
+    else if (!st || st.pl !== 'home') history.replaceState({ pl: 'home' }, '');
+    showScreen('scr-home');
+    renderLabs();
+  } else {
+    cleanup();
+    S.user = null;
+    closeModal(null);
+    $('authPass').value = ''; $('authPass2').value = '';
+    setAuthMode('login');
+    showScreen('scr-auth');
+    setTimeout(function () { ($('authUser').value ? $('authPass') : $('authUser')).focus(); }, 50);
+  }
+}
+
+function cleanup() {
+  if (S.monthUnsub) { try { S.monthUnsub(); } catch (e) {} S.monthUnsub = null; }
+  if (S.labsUnsub) { try { S.labsUnsub(); } catch (e) {} S.labsUnsub = null; }
+  S.labs = []; S.lab = null; S.cells = {}; S.editing = null;
+  S.labsLoaded = false;
+}
+
+/* ============================ Laboratori ============================ */
+function onLabs(list) {
+  list.sort(function (a, b) { return (a.creato || 0) - (b.creato || 0) || String(a.nome).localeCompare(String(b.nome)); });
+  S.labs = list;
+  S.labsLoaded = true;
+  renderLabs();
+  if (S.lab) {
+    var cur = findLab(S.lab.id);
+    if (!cur) {
+      toast('Questo laboratorio \u00e8 stato eliminato.', 'err');
+      closeLab(true);
+    } else if (cur.nome !== S.lab.nome) {
+      S.lab = cur;
+      $('labTitle').textContent = cur.nome;
+    }
+  }
+}
+function findLab(id) { for (var i = 0; i < S.labs.length; i++) if (S.labs[i].id === id) return S.labs[i]; return null; }
+
+function renderLabs() {
+  var g = $('labGrid');
+  if (!S.labsLoaded) { g.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="spinner" style="margin:0 auto"></div></div>'; return; }
+  var n = S.labs.length;
+  $('labCount').textContent = n === 0 ? 'Nessun laboratorio creato.'
+    : (n === 1 ? '1 laboratorio \u00b7 toccalo per vedere e prenotare le ore.' : n + ' laboratori \u00b7 toccane uno per vedere e prenotare le ore.');
+  if (!n) {
+    g.innerHTML = '<div class="empty" style="grid-column:1/-1">' + icon('flask') +
+      '<h3>Nessun laboratorio</h3><p>Premi \u00abAggiungi laboratorio\u00bb per creare il primo, ad esempio \u00abLaboratorio di informatica\u00bb.</p></div>';
+    return;
+  }
+  g.innerHTML = S.labs.map(function (l) {
+    return '<div class="lab-card" data-id="' + esc(l.id) + '">' +
+      '<button class="lab-open" type="button" data-open="' + esc(l.id) + '">' +
+        '<span class="lab-icon">' + icon('flask') + '</span>' +
+        '<span class="lab-name">' + esc(l.nome) + '</span>' +
+        '<span class="lab-go">' + icon('cal') + 'Apri il calendario' + icon('chev-r') + '</span>' +
+      '</button>' +
+      '<button class="icon-btn plain kebab" type="button" data-menu="' + esc(l.id) + '" aria-label="Altre azioni per ' + esc(l.nome) + '">' + icon('more') + '</button>' +
+    '</div>';
+  }).join('');
+}
+
+$('labGrid').addEventListener('click', function (e) {
+  var o = e.target.closest('[data-open]');
+  if (o) { openLab(o.getAttribute('data-open'), true); return; }
+  var m = e.target.closest('[data-menu]');
+  if (m) { e.stopPropagation(); openLabMenu(m, m.getAttribute('data-menu')); }
+});
+
+$('addLabBtn').addEventListener('click', function () {
+  askText({
+    title: 'Nuovo laboratorio',
+    desc: 'Scrivi il nome da dare al laboratorio.',
+    label: 'Nome del laboratorio',
+    placeholder: 'es. Laboratorio di informatica',
+    ok: 'Crea laboratorio'
+  }).then(function (nome) {
+    if (!nome) return;
+    return B.addLab(S.user, nome).then(function () { toast('Laboratorio \u00ab' + nome + '\u00bb creato.'); });
+  }).catch(function (e) { toast(friendly(e), 'err'); });
+});
+
+function openLabMenu(anchor, id) {
+  var l = findLab(id); if (!l) return;
+  showMenu(anchor, [
+    { icon: 'pencil', text: 'Rinomina', act: function () {
+      askText({ title: 'Rinomina laboratorio', label: 'Nome del laboratorio', value: l.nome, ok: 'Salva' })
+        .then(function (nome) { if (nome && nome !== l.nome) return B.renameLab(S.user, id, nome).then(function () { toast('Nome aggiornato.'); }); })
+        .catch(function (e) { toast(friendly(e), 'err'); });
+    } },
+    { icon: 'trash', text: 'Elimina', danger: true, act: function () {
+      confirmBox({
+        title: 'Eliminare il laboratorio?',
+        desc: '\u00ab' + l.nome + '\u00bb e tutte le sue prenotazioni verranno eliminati per tutti i docenti. L\'operazione non si pu\u00f2 annullare.',
+        ok: 'Elimina', danger: true
+      }).then(function (yes) {
+        if (yes) return B.deleteLab(S.user, id).then(function () { toast('Laboratorio eliminato.'); });
+      }).catch(function (e) { toast(friendly(e), 'err'); });
+    } }
+  ]);
+}
+
+/* ============================ Account ============================ */
+$('accountBtn').addEventListener('click', function (e) {
+  e.stopPropagation();
+  showMenu($('accountBtn'), [
+    { head: true, html: 'Accesso come<b>' + esc(S.user) + '</b>' },
+    { icon: 'key', text: 'Cambia password', act: changePasswordDialog },
+    { sep: true },
+    { icon: 'logout', text: 'Esci', act: function () {
+      B.logout().catch(function (e) { toast(friendly(e), 'err'); });
+    } }
+  ], true);
+});
+
+function changePasswordDialog() {
+  openModal(
+    '<h3>Cambia password</h3>' +
+    '<p class="desc">La nuova password varr\u00e0 per tutti: ricordati di comunicarla ai colleghi.</p>' +
+    '<form id="cpForm" novalidate>' +
+      '<label class="field"><span>Password attuale</span><input class="input" id="cpOld" type="password" autocomplete="current-password"></label>' +
+      '<label class="field"><span>Nuova password</span><input class="input" id="cpNew" type="password" autocomplete="new-password"></label>' +
+      '<label class="field"><span>Conferma nuova password</span><input class="input" id="cpNew2" type="password" autocomplete="new-password"></label>' +
+      '<p class="form-error" id="cpErr"></p>' +
+      '<div class="modal-actions"><button type="button" class="btn" data-close>Annulla</button><button type="submit" class="btn primary" id="cpOk">Salva</button></div>' +
+    '</form>'
+  );
+  $('cpOld').focus();
+  $('cpForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var o = $('cpOld').value, n = $('cpNew').value, n2 = $('cpNew2').value, er = $('cpErr');
+    var msg = (!o ? 'Inserisci la password attuale.' : '') || checkPass(n) || (n !== n2 ? 'Le due password non coincidono.' : '');
+    if (msg) { er.textContent = msg; return; }
+    $('cpOk').disabled = true;
+    B.changePassword(S.user, o, n).then(function () {
+      closeModal(); toast('Password aggiornata: comunicala ai colleghi.');
+    }).catch(function (err) {
+      er.textContent = friendly(err); $('cpOk').disabled = false;
+    });
+  });
+}
+
+/* ============================ Menu e finestre ============================ */
+var menuOpen = false;
+function showMenu(anchor, items, alignRight) {
+  var m = $('menu');
+  m.innerHTML = items.map(function (it, i) {
+    if (it.sep) return '<hr>';
+    if (it.head) return '<div class="mhead">' + it.html + '</div>';
+    return '<button type="button" class="mi' + (it.danger ? ' danger' : '') + '" data-i="' + i + '">' + icon(it.icon) + esc(it.text) + '</button>';
+  }).join('');
+  m.hidden = false;
+  var r = anchor.getBoundingClientRect(), mw = m.offsetWidth, mh = m.offsetHeight;
+  var left = alignRight ? r.right - mw : r.right - mw;
+  left = clamp(left, 8, window.innerWidth - mw - 8);
+  var top = r.bottom + 6;
+  if (top + mh > window.innerHeight - 8) top = Math.max(8, r.top - mh - 6);
+  m.style.left = left + 'px'; m.style.top = top + 'px';
+  menuOpen = true;
+  m.onclick = function (e) {
+    var b = e.target.closest('[data-i]'); if (!b) return;
+    var it = items[+b.getAttribute('data-i')];
+    closeMenu();
+    if (it && it.act) it.act();
+  };
+  var first = m.querySelector('.mi'); if (first) first.focus({ preventScroll: true });
+}
+function closeMenu() { if (!menuOpen) return; menuOpen = false; $('menu').hidden = true; }
+document.addEventListener('click', function (e) { if (menuOpen && !e.target.closest('#menu')) closeMenu(); });
+window.addEventListener('resize', closeMenu);
+window.addEventListener('scroll', closeMenu, true);
+
+var modalResolve = null;
+function openModal(html) {
+  closeMenu();
+  $('modalCard').innerHTML = html;
+  $('modal').hidden = false;
+  Array.prototype.forEach.call($('modalCard').querySelectorAll('[data-close]'), function (b) {
+    b.addEventListener('click', function () { closeModal(null); });
+  });
+}
+function closeModal(val) {
+  $('modal').hidden = true;
+  $('modalCard').innerHTML = '';
+  var r = modalResolve; modalResolve = null;
+  if (r) r(val === undefined ? null : val);
+}
+$('modal').addEventListener('mousedown', function (e) { if (e.target === $('modal')) closeModal(null); });
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') {
+    if (!$('modal').hidden) closeModal(null);
+    else if (menuOpen) closeMenu();
+  }
+});
+
+function askText(o) {
+  return new Promise(function (resolve) {
+    openModal(
+      '<h3>' + esc(o.title) + '</h3>' + (o.desc ? '<p class="desc">' + esc(o.desc) + '</p>' : '') +
+      '<form id="askForm" novalidate><label class="field"><span>' + esc(o.label) + '</span>' +
+      '<input class="input" id="askInput" type="text" maxlength="60" placeholder="' + esc(o.placeholder || '') + '" value="' + esc(o.value || '') + '"></label>' +
+      '<p class="form-error" id="askErr"></p>' +
+      '<div class="modal-actions"><button type="button" class="btn" data-close>Annulla</button><button type="submit" class="btn primary">' + esc(o.ok || 'OK') + '</button></div></form>'
+    );
+    modalResolve = resolve;
+    var inp = $('askInput');
+    inp.focus(); inp.select();
+    $('askForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var v = inp.value.replace(/\s+/g, ' ').trim();
+      if (!v) { $('askErr').textContent = 'Scrivi un nome.'; return; }
+      closeModal(v);
+    });
+  });
+}
+function confirmBox(o) {
+  return new Promise(function (resolve) {
+    openModal(
+      '<h3>' + esc(o.title) + '</h3><p class="desc">' + esc(o.desc) + '</p>' +
+      '<div class="modal-actions"><button type="button" class="btn" data-close>Annulla</button>' +
+      '<button type="button" class="btn ' + (o.danger ? 'danger' : 'primary') + '" id="cfOk">' + esc(o.ok || 'OK') + '</button></div>'
+    );
+    modalResolve = function (v) { resolve(!!v); };
+    $('cfOk').addEventListener('click', function () { closeModal(true); });
+    $('cfOk').focus();
+  });
+}
+
+/* ============================ Calendario ============================ */
+function ymKey(y, m) { return y + '-' + pad(m + 1); }
+
+/* Settimane da lunedi' a sabato che contengono giorni del mese */
+function buildWeeks(y, m) {
+  var n = new Date(y, m + 1, 0).getDate(), weeks = [], cur = null;
+  for (var d = 1; d <= n; d++) {
+    var dow = new Date(y, m, d).getDay();
+    if (dow === 0) continue;
+    var idx = dow - 1, startDay = d - idx;
+    if (!cur || cur.start !== startDay) { cur = { start: startDay, days: [null, null, null, null, null, null] }; weeks.push(cur); }
+    cur.days[idx] = d;
+  }
+  return weeks;
+}
+
+function calendarHTML() {
+  var y = S.year, m = S.month, weeks = buildWeeks(y, m);
+  var now = new Date(), isCur = now.getFullYear() === y && now.getMonth() === m, today = now.getDate();
+  var h = '<table class="cal" id="calTable"><colgroup><col class="c-day"><col class="c-num">';
+  for (var c = 0; c < HOURS; c++) h += '<col class="c-h">';
+  h += '</colgroup><thead><tr><th class="cal-title" colspan="' + (HOURS + 2) + '"><div class="title-inner">' +
+    '<button type="button" class="nav-btn" id="prevM" aria-label="Mese precedente">' + icon('chev-l') + '</button>' +
+    '<span class="m-label" id="monthLabel">' + MONTHS[m] + ' ' + y + '</span>' +
+    '<button type="button" class="nav-btn" id="nextM" aria-label="Mese successivo">' + icon('chev-r') + '</button>' +
+    '</div></th></tr></thead><tbody>';
+  weeks.forEach(function (w) {
+    h += '<tr class="hh"><td></td><td></td>';
+    for (var k = 1; k <= HOURS; k++) h += '<th scope="col">' + k + '</th>';
+    h += '</tr>';
+    for (var i = 0; i < 6; i++) {
+      var d = w.days[i];
+      h += '<tr' + (d && isCur && d === today ? ' class="is-today"' : '') + '><td class="dname">' + DAYS[i] + '</td><td class="dnum">' + (d || '') + '</td>';
+      for (var hr = 1; hr <= HOURS; hr++) {
+        if (d) {
+          h += '<td class="slot" tabindex="0" data-k="' + pad(d) + '-' + hr + '" data-d="' + i + '"><div class="sv"></div></td>';
+        } else {
+          h += '<td class="slot off" aria-hidden="true"></td>';
+        }
+      }
+      h += '</tr>';
+    }
+  });
+  h += '</tbody></table>';
+  h += '<p class="cal-legend">Tocca una casella per scrivere la classe (es. 2A). Per cancellarla, svuota la casella. Le modifiche sono visibili subito a tutti i docenti.</p>';
+  return h;
+}
+
+function slotLabel(td) {
+  var k = td.getAttribute('data-k'), d = parseInt(k.slice(0, 2), 10), hr = k.slice(3);
+  return DAYS[+td.getAttribute('data-d')] + ' ' + d + ' ' + MONTHS_LC[S.month] + ', ' + hr + '\u00aa ora';
+}
+
+function paintSlot(td, flash) {
+  var k = td.getAttribute('data-k'), v = S.cells[k] || '';
+  var sv = td.firstChild;
+  if (!sv || sv.className !== 'sv') return;
+  if (sv.textContent !== v) {
+    sv.textContent = v;
+    if (flash) { td.classList.remove('flash'); void td.offsetWidth; td.classList.add('flash'); }
+  }
+  td.classList.toggle('booked', !!v);
+  td.title = slotLabel(td) + (v ? ': ' + v : ' (libera)');
+}
+function paintAll(flash) {
+  var t = $('calTable'); if (!t) return;
+  Array.prototype.forEach.call(t.querySelectorAll('td.slot[data-k]'), function (td) {
+    if (S.editing && S.editing.td === td) return;
+    paintSlot(td, flash);
+  });
+}
+
+function openLab(id, push) {
+  var l = findLab(id); if (!l) return;
+  S.lab = l;
+  var now = new Date();
+  S.year = now.getFullYear(); S.month = now.getMonth();
+  $('labTitle').textContent = l.nome;
+  showScreen('scr-lab');
+  if (push) history.pushState({ pl: 'lab', id: id }, '');
+  renderCalendar();
+  subscribeMonth();
+  requestAnimationFrame(function () { fitZoom(); showPinchHint(); });
+}
+
+function closeLab(fromCode) {
+  finishEdit(true);
+  if (S.monthUnsub) { try { S.monthUnsub(); } catch (e) {} S.monthUnsub = null; }
+  S.lab = null; S.cells = {};
+  $('calWrap').innerHTML = '';
+  showScreen('scr-home');
+  if (fromCode && history.state && history.state.pl === 'lab') history.replaceState({ pl: 'home' }, '');
+}
+
+$('backBtn').addEventListener('click', function () {
+  if (history.state && history.state.pl === 'lab') history.back();
+  else closeLab(true);
+});
+window.addEventListener('popstate', function (e) {
+  var st = e.state;
+  if (!S.user) return;
+  if (st && st.pl === 'lab') { if (!S.lab || S.lab.id !== st.id) { if (findLab(st.id)) openLab(st.id, false); else history.replaceState({ pl: 'home' }, ''); } }
+  else if (S.lab) closeLab(false);
+  else { closeModal(null); closeMenu(); }
+});
+
+function renderCalendar() {
+  S.editing = null;
+  $('calWrap').innerHTML = calendarHTML();
+  var now = new Date();
+  $('todayBtn').hidden = (now.getFullYear() === S.year && now.getMonth() === S.month);
+  updateVW();
+  paintAll(false);
+}
+
+var firstSnap = true;
+function subscribeMonth() {
+  if (S.monthUnsub) { try { S.monthUnsub(); } catch (e) {} S.monthUnsub = null; }
+  S.cells = {};
+  firstSnap = true;
+  var ym = ymKey(S.year, S.month), labId = S.lab.id;
+  S.monthUnsub = B.watchMonth(S.user, labId, ym, function (cells) {
+    if (!S.lab || S.lab.id !== labId || ymKey(S.year, S.month) !== ym) return;
+    S.cells = cells || {};
+    paintAll(!firstSnap);
+    firstSnap = false;
+  }, function (e) { toast(friendly(e), 'err'); });
+}
+
+function changeMonth(delta) {
+  finishEdit(true);
+  var m = S.month + delta, y = S.year;
+  while (m < 0) { m += 12; y--; }
+  while (m > 11) { m -= 12; y++; }
+  S.year = y; S.month = m;
+  var sc = $('calScroller');
+  renderCalendar();
+  subscribeMonth();
+  sc.scrollTop = 0;
+}
+$('todayBtn').addEventListener('click', function () {
+  var now = new Date();
+  changeMonth((now.getFullYear() - S.year) * 12 + (now.getMonth() - S.month));
+});
+
+$('calWrap').addEventListener('click', function (e) {
+  if (e.target.closest('#prevM')) { changeMonth(-1); return; }
+  if (e.target.closest('#nextM')) { changeMonth(1); return; }
+  var td = e.target.closest('td.slot[data-k]');
+  if (td && !(S.editing && S.editing.td === td)) startEdit(td);
+});
+$('calWrap').addEventListener('keydown', function (e) {
+  var td = e.target.closest && e.target.closest('td.slot[data-k]');
+  if (!td || (S.editing && S.editing.td === td)) return;
+  if (e.key === 'Enter' || e.key === ' ' || e.key === 'F2') { e.preventDefault(); startEdit(td); }
+  else if (e.key === 'Delete' || e.key === 'Backspace') {
+    e.preventDefault();
+    if (S.cells[td.getAttribute('data-k')]) saveCell(td.getAttribute('data-k'), '');
+  }
+});
+
+function startEdit(td) {
+  if (S.editing) finishEdit(true);
+  var k = td.getAttribute('data-k'), cur = S.cells[k] || '';
+  td.classList.add('editing');
+  td.innerHTML = '';
+  var inp = document.createElement('input');
+  inp.type = 'text';
+  inp.maxLength = MAX_CELL;
+  inp.value = cur;
+  inp.autocomplete = 'off';
+  inp.spellcheck = false;
+  inp.setAttribute('autocapitalize', 'characters');
+  inp.setAttribute('enterkeyhint', 'done');
+  inp.setAttribute('aria-label', 'Classe per ' + slotLabel(td));
+  td.appendChild(inp);
+  var ed = { td: td, k: k, inp: inp, orig: cur };
+  S.editing = ed;
+  inp.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); finishEdit(true, 0, true); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); finishEdit(false, 0, true); }
+    else if (e.key === 'Tab') { e.preventDefault(); finishEdit(true, e.shiftKey ? -1 : 1); }
+  });
+  inp.addEventListener('blur', function () { if (S.editing === ed) finishEdit(true); });
+  inp.focus({ preventScroll: true });
+  try { inp.select(); } catch (e) {}
+}
+
+function finishEdit(save, move, refocus) {
+  var ed = S.editing;
+  if (!ed) return;
+  S.editing = null;
+  var val = ed.inp.value.replace(/\s+/g, ' ').trim().slice(0, MAX_CELL);
+  var td = ed.td;
+  td.classList.remove('editing');
+  td.innerHTML = '<div class="sv"></div>';
+  if (save && val !== ed.orig) saveCell(ed.k, val);
+  else paintSlot(td, false);
+  if (move) {
+    var list = Array.prototype.slice.call($('calTable').querySelectorAll('td.slot[data-k]'));
+    var i = list.indexOf(td) + move;
+    if (i >= 0 && i < list.length) { startEdit(list[i]); ensureVisible(list[i]); }
+  } else if (refocus) {
+    td.focus({ preventScroll: true });
+  }
+}
+
+function saveCell(k, val) {
+  var prev = S.cells[k] || '';
+  if (val) S.cells[k] = val; else delete S.cells[k];
+  var td = document.querySelector('#calTable td.slot[data-k="' + k + '"]');
+  if (td && !(S.editing && S.editing.td === td)) paintSlot(td, false);
+  var labId = S.lab.id, ym = ymKey(S.year, S.month);
+  B.setCell(S.user, labId, ym, k, val).catch(function (e) {
+    toast('Prenotazione non salvata. ' + friendly(e), 'err');
+    if (S.lab && S.lab.id === labId && ymKey(S.year, S.month) === ym) {
+      if (prev) S.cells[k] = prev; else delete S.cells[k];
+      paintAll(false);
+    }
+  });
+}
+
+function ensureVisible(td) {
+  var sc = $('calScroller'), r = td.getBoundingClientRect(), s = sc.getBoundingClientRect();
+  if (r.left < s.left) sc.scrollLeft -= (s.left - r.left) + 20;
+  else if (r.right > s.right) sc.scrollLeft += (r.right - s.right) + 20;
+  if (r.top < s.top + 50) sc.scrollTop -= (s.top + 50 - r.top);
+  else if (r.bottom > s.bottom) sc.scrollTop += (r.bottom - s.bottom) + 20;
+}
+
+/* ============================ Zoom (pulsanti, pizzico, ctrl+rotella) ============================ */
+function updateVW() {
+  var sc = $('calScroller');
+  $('calWrap').style.setProperty('--vw', sc.clientWidth + 'px');
+}
+function naturalWidth() {
+  var t = $('calTable'); if (!t) return 720;
+  return t.offsetWidth / S.zoom + 2 * 0.9 * 14; /* tabella + margini interni a zoom 1 */
+}
+function applyZoom(z, fx, fy) {
+  var sc = $('calScroller');
+  z = clamp(z, ZMIN, ZMAX);
+  var oldZ = S.zoom;
+  if (fx == null) { fx = sc.clientWidth / 2; fy = sc.clientHeight / 2; }
+  var px = (sc.scrollLeft + fx) / oldZ, py = (sc.scrollTop + fy) / oldZ;
+  S.zoom = z;
+  $('calWrap').style.setProperty('--z', z.toFixed(4));
+  sc.scrollLeft = px * z - fx;
+  sc.scrollTop = py * z - fy;
+  $('zoomLabel').textContent = Math.round(z * 100) + '%';
+}
+function fitZoom() {
+  var sc = $('calScroller');
+  updateVW();
+  var w = naturalWidth();
+  var z = clamp((sc.clientWidth - 2) / w, ZMIN, 1.15);
+  applyZoom(z, 0, 0);
+  sc.scrollLeft = 0; sc.scrollTop = 0;
+}
+$('zoomIn').addEventListener('click', function () { applyZoom(S.zoom * 1.2); });
+$('zoomOut').addEventListener('click', function () { applyZoom(S.zoom / 1.2); });
+$('zoomFit').addEventListener('click', fitZoom);
+window.addEventListener('resize', function () { if (S.lab) updateVW(); });
+
+(function setupPinch() {
+  var sc = $('calScroller'), pz = null, raf = 0, pending = null;
+  function dist(a, b) { var dx = a.clientX - b.clientX, dy = a.clientY - b.clientY; return Math.sqrt(dx * dx + dy * dy); }
+  sc.addEventListener('touchstart', function (e) {
+    if (e.touches.length === 2) {
+      var a = e.touches[0], b = e.touches[1], r = sc.getBoundingClientRect();
+      pz = { d0: dist(a, b) || 1, z0: S.zoom, fx: (a.clientX + b.clientX) / 2 - r.left, fy: (a.clientY + b.clientY) / 2 - r.top };
+      hidePinchHint();
+    }
+  }, { passive: true });
+  sc.addEventListener('touchmove', function (e) {
+    if (!pz || e.touches.length !== 2) return;
+    e.preventDefault();
+    var a = e.touches[0], b = e.touches[1], r = sc.getBoundingClientRect();
+    pending = { z: pz.z0 * dist(a, b) / pz.d0, fx: (a.clientX + b.clientX) / 2 - r.left, fy: (a.clientY + b.clientY) / 2 - r.top };
+    if (!raf) raf = requestAnimationFrame(function () {
+      raf = 0;
+      if (pending) { applyZoom(pending.z, pending.fx, pending.fy); pending = null; }
+    });
+  }, { passive: false });
+  function end(e) { if (pz && e.touches.length < 2) pz = null; }
+  sc.addEventListener('touchend', end);
+  sc.addEventListener('touchcancel', end);
+  /* Safari iOS: blocca lo zoom dell'intera pagina sopra la tabella */
+  ['gesturestart', 'gesturechange'].forEach(function (n) {
+    sc.addEventListener(n, function (e) { e.preventDefault(); }, { passive: false });
+  });
+  /* Ctrl + rotella (o pizzico sul touchpad) su computer */
+  sc.addEventListener('wheel', function (e) {
+    if (!e.ctrlKey) return;
+    e.preventDefault();
+    var r = sc.getBoundingClientRect();
+    applyZoom(S.zoom * Math.exp(-e.deltaY * 0.0022), e.clientX - r.left, e.clientY - r.top);
+  }, { passive: false });
+})();
+
+var hintTimer = 0;
+function showPinchHint() {
+  var touch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  if (!touch || load('pl_pinch_hint') === '1') return;
+  var h = $('pinchHint');
+  h.hidden = false; h.style.opacity = '1';
+  clearTimeout(hintTimer);
+  hintTimer = setTimeout(hidePinchHint, 4500);
+}
+function hidePinchHint() {
+  var h = $('pinchHint');
+  if (h.hidden) return;
+  store('pl_pinch_hint', '1');
+  h.style.opacity = '0';
+  setTimeout(function () { h.hidden = true; }, 400);
+}
+
+/* ============================ PDF del mese ============================ */
+$('pdfBtn').addEventListener('click', function () {
+  finishEdit(true);
+  var btn = $('pdfBtn');
+  btn.disabled = true;
+  (window.jspdf ? Promise.resolve() : loadScript(JSPDF_URL))
+    .then(buildPDF)
+    .catch(function (e) { toast('Impossibile creare il PDF: ' + (e && e.message ? e.message : e), 'err'); })
+    .then(function () { btn.disabled = false; });
+});
+
+function buildPDF() {
+  var jsPDF = window.jspdf.jsPDF;
+  var doc = new jsPDF({ unit: 'pt', format: 'a4', orientation: 'portrait' });
+  var W = 595.28, H = 841.89;
+  var y0 = S.year, m = S.month, weeks = buildWeeks(y0, m);
+  var colDay = 80, colNum = 24, colH = 38, tableW = colDay + colNum + HOURS * colH;
+  var x0 = (W - tableW) / 2;
+  var top = 70, bottom = H - 50, titleH = 24;
+  var rows = weeks.length * 7;
+  var rowH = Math.min(18.6, (bottom - top - titleH) / rows);
+
+  doc.setProperties({ title: S.lab.nome + ' - ' + MONTHS_LC[m] + ' ' + y0, creator: 'Prenotazione laboratorio' });
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(34, 32, 26);
+  doc.text(fitStr(doc, S.lab.nome, tableW), W / 2, 42, { align: 'center' });
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(110, 104, 88);
+  doc.text('Prenotazione laboratorio', W / 2, 55, { align: 'center' });
+
+  var y = top;
+  doc.setFillColor(74, 68, 42);
+  doc.rect(x0, y, tableW, titleH, 'F');
+  doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+  doc.text(MONTHS[m] + ' ' + y0, W / 2, y + titleH / 2, { align: 'center', baseline: 'middle' });
+  y += titleH;
+
+  doc.setDrawColor(30, 30, 30); doc.setLineWidth(0.5);
+  var hx = x0 + colDay + colNum;
+  weeks.forEach(function (w) {
+    doc.setFillColor(217, 217, 217);
+    doc.rect(hx, y, HOURS * colH, rowH, 'F');
+    gridRow(doc, x0, y, rowH, colDay, colNum, colH);
+    doc.setTextColor(20, 20, 20); doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
+    for (var k = 0; k < HOURS; k++) doc.text(String(k + 1), hx + k * colH + colH / 2, y + rowH / 2, { align: 'center', baseline: 'middle' });
+    y += rowH;
+    for (var i = 0; i < 6; i++) {
+      var d = w.days[i];
+      gridRow(doc, x0, y, rowH, colDay, colNum, colH);
+      var cy = y + rowH / 2;
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(20, 20, 20);
+      doc.text(DAYS[i], x0 + colDay / 2, cy, { align: 'center', baseline: 'middle' });
+      if (d) {
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
+        doc.text(String(d), x0 + colDay + colNum / 2, cy, { align: 'center', baseline: 'middle' });
+        for (var hr = 1; hr <= HOURS; hr++) {
+          var v = S.cells[pad(d) + '-' + hr];
+          if (v) {
+            doc.setFont('helvetica', 'normal');
+            var size = 8; doc.setFontSize(size);
+            while (doc.getTextWidth(v) > colH - 3 && size > 4.6) { size -= 0.2; doc.setFontSize(size); }
+            doc.text(fitStr(doc, v, colH - 3), hx + (hr - 1) * colH + colH / 2, cy, { align: 'center', baseline: 'middle' });
+          }
+        }
+      }
+      y += rowH;
+    }
+  });
+  doc.setLineWidth(1.2);
+  doc.rect(x0, top, tableW, y - top);
+
+  var now = new Date();
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(120, 116, 100);
+  doc.text('Scaricato il ' + pad(now.getDate()) + '/' + pad(now.getMonth() + 1) + '/' + now.getFullYear() + ' alle ' + pad(now.getHours()) + ':' + pad(now.getMinutes()), x0, H - 28);
+  doc.text('Prenotazione laboratorio - app del prof. Antonio Guida', x0 + tableW, H - 28, { align: 'right' });
+
+  var safe = String(S.lab.nome).replace(/[\\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim() || 'Laboratorio';
+  var name = safe + ' - ' + MONTHS_LC[m].charAt(0).toUpperCase() + MONTHS_LC[m].slice(1) + ' ' + y0 + '.pdf';
+  doc.save(name);
+  toast('PDF di ' + MONTHS_LC[m] + ' ' + y0 + ' scaricato.');
+}
+
+function gridRow(doc, x0, y, h, cd, cn, ch) {
+  doc.rect(x0, y, cd, h);
+  doc.rect(x0 + cd, y, cn, h);
+  for (var k = 0; k < HOURS; k++) doc.rect(x0 + cd + cn + k * ch, y, ch, h);
+}
+function fitStr(doc, s, maxW) {
+  s = String(s);
+  if (doc.getTextWidth(s) <= maxW) return s;
+  while (s.length > 1 && doc.getTextWidth(s + '...') > maxW) s = s.slice(0, -1);
+  return s + '...';
+}
+
+start();
+})();
+</script>
+</body>
+</html>
