@@ -273,7 +273,7 @@ td.slot input{
   display:block;width:100%;height:2.3em;margin:0;border:0;padding:0 .2em;
   font:inherit;font-weight:700;text-align:center;color:var(--text);background:var(--surface);
   outline:.17em solid var(--accent);outline-offset:-.17em;border-radius:0;
-  -webkit-user-select:text;user-select:text;
+  -webkit-user-select:text;user-select:text;text-transform:uppercase;
 }
 .cal-legend{max-width:49.4em;margin:.9em auto 0;font-size:.82em;color:var(--muted);text-align:center;line-height:1.5}
 
@@ -492,6 +492,7 @@ function esc(s) {
 }
 function icon(name, cls) { return '<svg class="ic' + (cls ? ' ' + cls : '') + '"><use href="#i-' + name + '"/></svg>'; }
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function upper(s) { s = String(s == null ? '' : s); try { return s.toLocaleUpperCase('it-IT'); } catch (e) { return s.toUpperCase(); } }
 function store(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
 function load(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
 function loadScript(src) {
@@ -1105,7 +1106,7 @@ function slotLabel(td) {
 }
 
 function paintSlot(td, flash) {
-  var k = td.getAttribute('data-k'), v = S.cells[k] || '';
+  var k = td.getAttribute('data-k'), v = upper(S.cells[k] || '');
   var sv = td.firstChild;
   if (!sv || sv.className !== 'sv') return;
   if (sv.textContent !== v) {
@@ -1243,7 +1244,7 @@ function finishEdit(save, move, refocus) {
   var ed = S.editing;
   if (!ed) return;
   S.editing = null;
-  var val = ed.inp.value.replace(/\s+/g, ' ').trim().slice(0, MAX_CELL);
+  var val = upper(ed.inp.value.replace(/\s+/g, ' ').trim()).slice(0, MAX_CELL);
   var td = ed.td;
   td.classList.remove('editing');
   td.innerHTML = '<div class="sv"></div>';
@@ -1422,7 +1423,7 @@ function buildPDF() {
         doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
         doc.text(String(d), x0 + colDay + colNum / 2, cy, { align: 'center', baseline: 'middle' });
         for (var hr = 1; hr <= HOURS; hr++) {
-          var v = S.cells[pad(d) + '-' + hr];
+          var v = upper(S.cells[pad(d) + '-' + hr] || '');
           if (v) {
             doc.setFont('helvetica', 'normal');
             var size = 8; doc.setFontSize(size);
