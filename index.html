@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#4a442a">
-<title>Prenotazione laboratorio</title>
+<title>Prenotazione laboratori scolastici</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23e6a73a'/%3E%3Crect x='12' y='14' width='40' height='38' rx='6' fill='%23fbf8ee'/%3E%3Crect x='15' y='17' width='34' height='9' rx='3' fill='%234a442a'/%3E%3Crect x='17' y='30' width='8' height='7' rx='2' fill='%23e3dcc4'/%3E%3Crect x='28' y='30' width='8' height='7' rx='2' fill='%234a442a'/%3E%3Crect x='39' y='30' width='8' height='7' rx='2' fill='%23e3dcc4'/%3E%3Crect x='17' y='40' width='8' height='7' rx='2' fill='%23e3dcc4'/%3E%3Crect x='28' y='40' width='8' height='7' rx='2' fill='%23e3dcc4'/%3E%3Crect x='39' y='40' width='8' height='7' rx='2' fill='%23e3dcc4'/%3E%3C/svg%3E">
 <script>
 /* Tema: applicato subito per evitare lampeggi */
@@ -288,7 +288,7 @@ td.slot input{
 .cal-legend{max-width:49.4em;margin:.9em auto 0;font-size:.82em;color:var(--muted);text-align:center;line-height:1.5}
 
 @media (max-width:640px){
-  .brand h1{font-size:16.5px}
+  .brand h1{font-size:15.5px;line-height:1.2;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
   .account-btn .uname{display:none}
   .account-btn{padding:0;width:42px;justify-content:center}
   .lab-bar{gap:6px;padding-left:10px;padding-right:10px}
@@ -374,7 +374,7 @@ td.slot input{
   <div class="auth-card">
     <div class="auth-head">
       <svg class="logo" viewBox="0 0 512 512" aria-hidden="true"><use href="#logo"/></svg>
-      <h1>Prenotazione laboratorio</h1>
+      <h1>Prenotazione laboratori scolastici</h1>
       <p>Prenota le ore dei laboratori della scuola</p>
     </div>
     <div class="seg" role="tablist">
@@ -414,7 +414,7 @@ td.slot input{
   <header class="topbar">
     <div class="brand">
       <svg class="logo" viewBox="0 0 512 512" aria-hidden="true"><use href="#logo"/></svg>
-      <h1>Prenotazione laboratorio</h1>
+      <h1>Prenotazione laboratori scolastici</h1>
     </div>
     <button class="icon-btn" id="themeBtn" type="button" aria-label="Cambia tema"><svg class="ic"><use id="themeIcon" href="#i-moon"/></svg></button>
     <button class="account-btn" id="accountBtn" type="button" aria-label="Account">
@@ -435,7 +435,7 @@ td.slot input{
     </div>
     <div id="labGrid" class="lab-grid"></div>
   </main>
-  <footer class="home-foot">Prenotazione laboratorio · app del prof. Antonio Guida · furtwangler900@gmail.com</footer>
+  <footer class="home-foot">Prenotazione laboratori scolastici · app del prof. Antonio Guida · furtwangler900@gmail.com</footer>
 </section>
 
 <!-- Calendario del laboratorio -->
@@ -1539,11 +1539,11 @@ function buildPDF() {
   var rows = weeks.length * 7;
   var rowH = Math.min(18.6, (bottom - top - titleH) / rows);
 
-  doc.setProperties({ title: S.lab.nome + ' - ' + MONTHS_LC[m] + ' ' + y0, creator: 'Prenotazione laboratorio' });
+  doc.setProperties({ title: S.lab.nome + ' - ' + MONTHS_LC[m] + ' ' + y0, creator: 'Prenotazione laboratori scolastici' });
   doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(34, 32, 26);
   doc.text(fitStr(doc, S.lab.nome, tableW), W / 2, 42, { align: 'center' });
   doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(110, 104, 88);
-  doc.text('Prenotazione laboratorio', W / 2, 55, { align: 'center' });
+  doc.text('Prenotazione laboratori scolastici', W / 2, 55, { align: 'center' });
 
   var y = top;
   doc.setFillColor(74, 68, 42);
@@ -1589,7 +1589,7 @@ function buildPDF() {
   var now = new Date();
   doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(120, 116, 100);
   doc.text('Scaricato il ' + pad(now.getDate()) + '/' + pad(now.getMonth() + 1) + '/' + now.getFullYear() + ' alle ' + pad(now.getHours()) + ':' + pad(now.getMinutes()), x0, H - 28);
-  doc.text('Prenotazione laboratorio - app del prof. Antonio Guida', x0 + tableW, H - 28, { align: 'right' });
+  doc.text('Prenotazione laboratori scolastici - app del prof. Antonio Guida', x0 + tableW, H - 28, { align: 'right' });
 
   var safe = String(S.lab.nome).replace(/[\\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim() || 'Laboratorio';
   var name = safe + ' - ' + MONTHS_LC[m].charAt(0).toUpperCase() + MONTHS_LC[m].slice(1) + ' ' + y0 + '.pdf';
