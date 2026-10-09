@@ -778,7 +778,7 @@ function setAuthMode(mode) {
   $('authPass').setAttribute('autocomplete', reg ? 'new-password' : 'current-password');
   $('authSubmit').textContent = reg ? 'Crea le credenziali' : 'Accedi';
   $('authHint').textContent = reg
-    ? 'Crea le credenziali una sola volta (ad esempio dal referente del laboratorio) e poi comunicale a tutti i docenti: chi entra con lo stesso nome utente vede e modifica le stesse prenotazioni.'
+    ? 'Crea le credenziali una sola volta (ad esempio dal referente del laboratorio) e poi comunicale a tutti i docenti: chi entra con lo stesso nome utente vede e modifica le stesse prenotazioni. La password deve avere almeno 8 caratteri.'
     : 'Usa il nome utente e la password comuni forniti dalla scuola.';
   $('authError').textContent = '';
 }
@@ -800,9 +800,13 @@ function checkUser(u) {
   if (!/^[a-z0-9._-]{3,30}$/.test(u)) return 'Il nome utente pu\u00f2 contenere solo lettere (senza accenti), numeri, punto e trattini, da 3 a 30 caratteri, senza spazi.';
   return '';
 }
-function checkPass(p) {
+/* Le password nuove (registrazione e cambio password) devono avere almeno 8 caratteri;
+   per l'accesso basta 4, cosi' chi ha ancora una password vecchia e corta puo' entrare e cambiarla. */
+var PASS_MIN_NEW = 8;
+function checkPass(p, min) {
+  min = min || 4;
   if (!p) return 'Inserisci la password.';
-  if (p.length < 4) return 'La password deve avere almeno 4 caratteri.';
+  if (p.length < min) return 'La password deve avere almeno ' + min + ' caratteri.';
   return '';
 }
 
@@ -810,7 +814,7 @@ $('authForm').addEventListener('submit', function (e) {
   e.preventDefault();
   var u = normUser($('authUser').value), p = $('authPass').value, er = $('authError');
   er.textContent = '';
-  var msg = checkUser(u) || checkPass(p);
+  var msg = checkUser(u) || checkPass(p, S.authMode === 'register' ? PASS_MIN_NEW : 4);
   if (!msg && S.authMode === 'register' && p !== $('authPass2').value) msg = 'Le due password non coincidono.';
   if (msg) { er.textContent = msg; return; }
   var btn = $('authSubmit');
@@ -980,7 +984,7 @@ function changePasswordDialog() {
   $('cpForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var o = $('cpOld').value, n = $('cpNew').value, n2 = $('cpNew2').value, er = $('cpErr');
-    var msg = (!o ? 'Inserisci la password attuale.' : '') || checkPass(n) || (n !== n2 ? 'Le due password non coincidono.' : '');
+    var msg = (!o ? 'Inserisci la password attuale.' : '') || checkPass(n, PASS_MIN_NEW) || (n !== n2 ? 'Le due password non coincidono.' : '');
     if (msg) { er.textContent = msg; return; }
     $('cpOk').disabled = true;
     B.changePassword(S.user, o, n).then(function () {
