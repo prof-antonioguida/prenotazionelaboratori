@@ -342,6 +342,7 @@ td.slot input{
   <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
   <symbol id="i-user" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
   <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+  <symbol id="i-user-x" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m17 8 5 5M22 8l-5 5"/></symbol>
   <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3"/></symbol>
   <symbol id="i-pdf" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
   <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="19" r="1.2"/></symbol>
@@ -621,6 +622,14 @@ var Local = (function () {
       acc[u] = hash(u + '|' + newP); write(K_ACC, acc);
       return later();
     },
+    deleteAccount: function (u, p) {
+      var acc = read(K_ACC, {});
+      if (!acc[u] || acc[u] !== hash(u + '|' + p)) return Promise.reject(err('auth/invalid-credential'));
+      delete acc[u]; write(K_ACC, acc);
+      localStorage.removeItem(K_DATA + u);
+      localStorage.removeItem(K_SES);
+      return later().then(function () { notify(); fireAuth(); });
+    },
     watchLabs: function (u, cb) {
       return watch(function () {
         var d = data(u);
@@ -700,6 +709,35 @@ var Fire = (function () {
       var cred = firebase.auth.EmailAuthProvider.credential(email(u), pw(oldP));
       return user.reauthenticateWithCredential(cred).then(function () { return user.updatePassword(pw(newP)); });
     },
+    /* Elimina l'account: prima verifica la password, poi cancella tutti i laboratori
+       con le loro prenotazioni (mesi) e infine l'utente di Authentication. */
+    deleteAccount: function (u, p) {
+      var user = auth.currentUser;
+      var cred = firebase.auth.EmailAuthProvider.credential(email(u), pw(p));
+      return user.reauthenticateWithCredential(cred).then(function () {
+        return labs(u).get();
+      }).then(function (snap) {
+        return Promise.all(snap.docs.map(function (d) {
+          return d.ref.collection('mesi').get().then(function (ms) {
+            return ms.docs.map(function (m) { return m.ref; }).concat([d.ref]);
+          });
+        }));
+      }).then(function (lists) {
+        var refs = [].concat.apply([], lists), chain = Promise.resolve();
+        for (var i = 0; i < refs.length; i += 400) {
+          (function (chunk) {
+            chain = chain.then(function () {
+              var batch = db.batch();
+              chunk.forEach(function (r) { batch.delete(r); });
+              return batch.commit();
+            });
+          })(refs.slice(i, i + 400));
+        }
+        return chain;
+      }).then(function () {
+        return user.delete();
+      });
+    },
     watchLabs: function (u, cb, onErr) {
       return labs(u).onSnapshot(function (snap) {
         cb(snap.docs.map(function (d) { var x = d.data() || {}; return { id: d.id, nome: x.nome || 'Laboratorio', creato: x.creato || 0 }; }));
@@ -738,7 +776,7 @@ var S = {
   user: null, labs: [], labsUnsub: null,
   lab: null, year: 0, month: 0, cells: {}, monthUnsub: null,
   editing: null, zoom: 1, authMode: 'login',
-  hist: {}, pendingHist: null
+  hist: {}, pendingHist: null, deleting: false
 };
 
 function showScreen(id) {
@@ -849,7 +887,7 @@ function handleAuth(u) {
     cleanup();
     S.user = u;
     $('unameLabel').textContent = u;
-    S.labsUnsub = B.watchLabs(u, onLabs, function (e) { toast(friendly(e), 'err'); });
+    S.labsUnsub = B.watchLabs(u, onLabs, function (e) { if (!S.deleting) toast(friendly(e), 'err'); });
     var st = history.state;
     if (st && st.pl === 'lab') history.replaceState({ pl: 'home' }, '');
     else if (!st || st.pl !== 'home') history.replaceState({ pl: 'home' }, '');
@@ -964,9 +1002,62 @@ $('accountBtn').addEventListener('click', function (e) {
     { sep: true },
     { icon: 'logout', text: 'Esci', act: function () {
       B.logout().catch(function (e) { toast(friendly(e), 'err'); });
-    } }
+    } },
+    { icon: 'user-x', text: 'Elimina account', danger: true, act: deleteAccountDialog }
   ], true);
 });
+
+function deleteAccountDialog() {
+  var u = S.user, n = S.labs.length;
+  var cosa = n === 0 ? 'Tutti i dati dell\'account'
+    : (n === 1 ? 'Il laboratorio creato e tutte le sue prenotazioni' : 'Tutti i ' + n + ' laboratori creati e tutte le loro prenotazioni');
+  openModal(
+    '<h3>Elimina account</h3>' +
+    '<p class="desc">Stai per eliminare l\'account <b>' + esc(u) + '</b>. ' + cosa +
+      ' verranno cancellati <b>definitivamente</b>, e queste credenziali smetteranno di funzionare per <b>tutti i docenti</b> che le usano. L\'operazione non si pu\u00f2 annullare.</p>' +
+    '<form id="daForm" novalidate>' +
+      '<label class="field"><span>Per confermare, scrivi la password</span>' +
+        '<div class="pw-wrap"><input class="input" id="daPass" type="password" autocomplete="current-password">' +
+        '<button type="button" class="eye" id="daEye" aria-label="Mostra password">' + icon('eye') + '</button></div></label>' +
+      '<p class="form-error" id="daErr"></p>' +
+      '<div class="modal-actions"><button type="button" class="btn" id="daCancel" data-close>Annulla</button>' +
+      '<button type="submit" class="btn danger" id="daOk">Elimina definitivamente</button></div>' +
+    '</form>'
+  );
+  $('daPass').focus();
+  $('daEye').addEventListener('click', function () {
+    var inp = $('daPass'), show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password';
+    this.innerHTML = icon(show ? 'eye-off' : 'eye');
+  });
+  $('daForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var p = $('daPass').value, er = $('daErr');
+    er.textContent = '';
+    if (!p) { er.textContent = 'Scrivi la password.'; return; }
+    $('daOk').disabled = true; $('daCancel').disabled = true;
+    $('daOk').textContent = 'Eliminazione in corso\u2026';
+    S.deleting = true;
+    B.deleteAccount(u, p).then(function () {
+      cleanup();
+      if (load('pl_last_user') === u) store('pl_last_user', null);
+      $('authUser').value = '';
+      S.deleting = false;
+      handleAuth(null);
+      toast('Account \u00ab' + u + '\u00bb eliminato.');
+    }).catch(function (err) {
+      S.deleting = false;
+      var c = (err && err.code) || '';
+      er.textContent = (c === 'auth/invalid-credential' || c === 'auth/wrong-password' || c === 'auth/invalid-login-credentials')
+        ? 'Password non corretta.' : friendly(err);
+      if ($('daOk')) {
+        $('daOk').disabled = false; $('daCancel').disabled = false;
+        $('daOk').textContent = 'Elimina definitivamente';
+        $('daPass').focus(); $('daPass').select();
+      }
+    });
+  });
+}
 
 function changePasswordDialog() {
   openModal(
@@ -1040,9 +1131,10 @@ function closeModal(val) {
   var r = modalResolve; modalResolve = null;
   if (r) r(val === undefined ? null : val);
 }
-$('modal').addEventListener('mousedown', function (e) { if (e.target === $('modal')) closeModal(null); });
+$('modal').addEventListener('mousedown', function (e) { if (e.target === $('modal') && !S.deleting) closeModal(null); });
 document.addEventListener('keydown', function (e) {
   if (e.key === 'Escape') {
+    if (S.deleting) return;
     if (!$('modal').hidden) closeModal(null);
     else if (menuOpen) closeMenu();
   }
@@ -1212,7 +1304,7 @@ function subscribeMonth() {
     var wasFirst = firstSnap;
     firstSnap = false;
     if (wasFirst && S.pendingHist) { var d = S.pendingHist; S.pendingHist = null; applyHistory(d); }
-  }, function (e) { toast(friendly(e), 'err'); });
+  }, function (e) { if (!S.deleting) toast(friendly(e), 'err'); });
 }
 
 function changeMonth(delta) {
