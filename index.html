@@ -272,6 +272,25 @@ tr.hh th{background:var(--hourhead);color:var(--hourhead-ink);font-weight:700;fo
 tr.hh td{background:var(--cell)}
 td.dname{font-weight:700;font-size:.84em;white-space:nowrap}
 td.dnum{font-size:.88em}
+/* Solo su telefoni e tablet (schermo touch): righe delle ore e colonne dei giorni
+   sempre visibili durante lo scorrimento; sul computer la tabella resta com'era */
+@media (hover:none) and (pointer:coarse){
+  table.cal{border-collapse:separate;border-spacing:0;width:calc(min(7.4em,84px) + min(2.4em,32px) + 39.6em)}
+  table.cal col.c-day{width:min(7.4em,84px)}
+  table.cal col.c-num{width:min(2.4em,32px)}
+  table.cal td,table.cal th{border:0;border-right:1px solid var(--grid);border-bottom:1px solid var(--grid)}
+  tr.hh th{font-size:min(.82em,14px)}
+  table.cal tbody tr.hh{height:min(2.3em,32px)}
+  td.dname{font-size:min(.84em,12.5px)}
+  td.dnum{font-size:min(.88em,13px)}
+  tr.hh th,tr.hh td{position:-webkit-sticky;position:sticky;top:var(--stickTop,44px);z-index:3}
+  td.dname,td.dnum{position:-webkit-sticky;position:sticky;background:var(--cell);z-index:2}
+  tr.is-today td.dname,tr.is-today td.dnum{background:var(--today)}
+  td.dname,tr.hh td:nth-child(1){left:0}
+  td.dnum,tr.hh td:nth-child(2){left:var(--stickLeft,7.4em)}
+  tr.hh td:nth-child(1),tr.hh td:nth-child(2){z-index:4}
+  td.dnum,tr.hh td:nth-child(2){box-shadow:1px 0 0 var(--grid)}
+}
 tr.is-today td.dname,tr.is-today td.dnum{background:var(--today)}
 td.slot{cursor:pointer;font-size:.86em;position:relative;padding:0 .1em}
 td.slot .sv{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:2.4}
@@ -1483,8 +1502,11 @@ function ensureVisible(td) {
 
 /* ============================ Zoom (pulsanti, pizzico, ctrl+rotella) ============================ */
 function updateVW() {
-  var sc = $('calScroller');
-  $('calWrap').style.setProperty('--vw', sc.clientWidth + 'px');
+  var sc = $('calScroller'), w = $('calWrap');
+  w.style.setProperty('--vw', sc.clientWidth + 'px');
+  var t = document.querySelector('#calTable th.cal-title'), d = document.querySelector('#calTable td.dname');
+  if (t) w.style.setProperty('--stickTop', (t.getBoundingClientRect().height - 0.5) + 'px');
+  if (d) w.style.setProperty('--stickLeft', d.getBoundingClientRect().width + 'px');
 }
 function naturalWidth() {
   var t = $('calTable'); if (!t) return 720;
@@ -1501,6 +1523,7 @@ function applyZoom(z, fx, fy) {
   sc.scrollLeft = px * z - fx;
   sc.scrollTop = py * z - fy;
   $('zoomLabel').textContent = Math.round(z * 100) + '%';
+  updateVW();
 }
 function fitZoom() {
   var sc = $('calScroller');
